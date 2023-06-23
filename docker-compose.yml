@@ -1,0 +1,10 @@
+version: "3"
+services:
+  ffmpeg_static_build:
+    image: ffmpeg-static
+    build: .
+    volumes:
+      - "./output:/ffmpeg_output"
+      - "./files:/patch-files"
+    network_mode: host
+    tty: true
