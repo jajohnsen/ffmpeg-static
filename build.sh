@@ -215,6 +215,53 @@ download \
   "586ca7cc091d26fd0a4c26308950ca51" \
   "https://github.com/FFmpeg/FFmpeg/archive"
 
+download \
+  "ladspa_sdk_1.17.tgz" \
+  "ladspa_sdk_1.17.tgz" \
+  "f4a2fb40405d1fc746d10fe0d3536db1" \
+  "http://www.ladspa.org/download"
+
+download \
+	"v3.7.2.tar.gz" \
+	"AviSynthPlus-3.7.2.tar.gz" \
+	"cac7ab4e64af4caa8c10aa14e796331f" \
+	"https://github.com/AviSynth/AviSynthPlus/archive/refs/tags/"
+
+# https://breakfastquay.com/files/releases/rubberband-3.2.1.tar.bz2"
+download \
+  "rubberband-3.2.1.tar.bz2" \
+  "" \
+  "722f5687d5e020874b865d87c41e03e9" \
+  "https://breakfastquay.com/files/releases/"
+
+# https://github.com/toots/shine/releases/download/3.1.1/shine-3.1.1.tar.gz
+download \
+  "shine-3.1.1.tar.gz" \
+  "" \
+  "74a2429e9b58ed7834bfe25902131faa" \
+  "https://github.com/toots/shine/releases/download/3.1.1/"
+
+# https://github.com/google/snappy/archive/refs/tags/1.1.10.tar.gz
+download \
+  "1.1.10.tar.gz" \
+  "snappy-1.1.10.tar.gz" \
+  "70153395ebe6d72febe2cf2e40026a44" \
+  "https://github.com/google/snappy/archive/refs/tags/"
+
+# https://github.com/silnrsi/graphite/archive/refs/tags/1.3.14.tar.gz
+download \
+  "1.3.14.tar.gz" \
+  "graphite-1.3.14.tar.gz" \
+  "a3cb1dc0032a5875e2eaa4ed57cd38b1" \
+  "https://github.com/silnrsi/graphite/archive/refs/tags/"
+
+# https://github.com/zeromq/libzmq/releases/download/v4.3.4/zeromq-4.3.4.tar.gz
+download \
+  "zeromq-4.3.4.tar.gz" \
+  "" \
+  "c897d4005a3f0b8276b00b7921412379" \
+  "https://github.com/zeromq/libzmq/releases/download/v4.3.4/" 
+
 [ $download_only -eq 1 ] && exit 0
 
 TARGET_DIR_SED=$(echo $TARGET_DIR | awk '{gsub(/\//, "\\/"); print}')
@@ -413,6 +460,47 @@ cd $BUILD_DIR/speex*
 make -j $jval
 make install
 
+echo "*** Building ladspa ***"
+cd $BUILD_DIR/ladspa*
+cp src/ladspa.h $TARGET_DIR/include/
+
+echo "*** Building AviSynthPlus ***"
+cd $BUILD_DIR/AviSynthPlus-*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+mkdir -p avisynth-build && cd avisynth-build
+PATH="$BIN_DIR:$PATH" cmake ../ -DHEADERS_ONLY:bool=on -DCMAKE_INSTALL_PREFIX="$TARGET_DIR"
+make VersionGen install
+
+echo "*** Building Rubber Band ***"
+cd $BUILD_DIR/rubberband-*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+meson setup build -Ddefault_library=static 
+meson configure --prefix=$TARGET_DIR --prefer-static ./build
+cd ./build
+meson install
+
+echo "*** Building Shine ***"
+cd $BUILD_DIR/shine-*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+[ ! -f config.status ] && \
+  ./configure --prefix=$TARGET_DIR --disable-shared
+make -j $jval
+make install
+
+echo "*** Building Snappy ***"
+cd $BUILD_DIR/snappy-*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DSNAPPY_BUILD_TESTS="OFF" -DSNAPPY_BUILD_BENCHMARKS="OFF" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR"
+make -j $jval
+make install
+
+echo "*** Building ZeroMQ ***"
+[ $rebuild -eq 0 -a -f Makefile ] && make distclean || true
+cd $BUILD_DIR/zeromq-*
+./configure --prefix=$TARGET_DIR --enable-static
+make -j $jval
+make install
+
 # FFMpeg
 echo "*** Building FFmpeg ***"
 cd $BUILD_DIR/FFmpeg*
@@ -457,7 +545,21 @@ if [ "$platform" = "linux" ]; then
     --enable-libxvid \
     --enable-libzimg \
     --enable-nonfree \
-    --enable-openssl
+    --enable-openssl \
+    --enable-ladspa \
+    --enable-libzmq \
+    --enable-avisynth \
+    --enable-libbluray \
+    --enable-libfontconfig \
+    --enable-libgme \
+    --enable-libgsm \
+    --enable-libmodplug \
+    --enable-libmysofa \
+    --enable-librubberband \
+    --enable-libshine \
+    --enable-libsnappy \
+    --enable-libtwolame \
+    --enable-libzvbi
 elif [ "$platform" = "darwin" ]; then
   [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" \
   PKG_CONFIG_PATH="${TARGET_DIR}/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/share/pkgconfig:/usr/local/Cellar/openssl/1.0.2o_1/lib/pkgconfig" ./configure \
@@ -496,7 +598,21 @@ elif [ "$platform" = "darwin" ]; then
     --enable-libxvid \
     --enable-libzimg \
     --enable-nonfree \
-    --enable-openssl
+    --enable-openssl \
+    --enable-ladspa \
+    --enable-libzmq \
+    --enable-avisynth \
+    --enable-libbluray \
+    --enable-libfontconfig \
+    --enable-libgme \
+    --enable-libgsm \
+    --enable-libmodplug \
+    --enable-libmysofa \
+    --enable-librubberband \
+    --enable-libshine \
+    --enable-libsnappy \
+    --enable-libtwolame \
+    --enable-libzvbi
 fi
 
 PATH="$BIN_DIR:$PATH" make -j $jval
