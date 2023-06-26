@@ -1,5 +1,7 @@
 build/
 target/
+*~ 
 *.swp
+*.swo
 bin/
 dl/
